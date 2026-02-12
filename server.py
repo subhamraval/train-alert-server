@@ -5,10 +5,15 @@ from firebase_admin import credentials, messaging
 from flask import Flask, request, jsonify
 from threading import Thread
 from bs4 import BeautifulSoup
+import os
+import json
 
 app = Flask(__name__)
 
-cred = credentials.Certificate("firebase.json")
+# Firebase init from environment
+cred = credentials.Certificate(
+    json.loads(os.environ["FIREBASE_JSON"])
+)
 firebase_admin.initialize_app(cred)
 
 tracking = False
@@ -34,7 +39,6 @@ def get_train_status():
         url = f"https://erail.in/train-enquiry/{train_number}?date={travel_date}"
         r = requests.get(url, timeout=15)
         soup = BeautifulSoup(r.text, "html.parser")
-
         text = soup.get_text()
 
         if "CURRENT" in text:
@@ -62,7 +66,7 @@ def tracking_loop():
                 tracking = False
                 current_active = False
 
-        time.sleep(600)  # 10 minutes
+        time.sleep(600)
 
 
 @app.route("/start", methods=["POST"])
